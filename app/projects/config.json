@@ -1,0 +1,54 @@
+{
+  "projects": [
+    {
+      "name": "Eureka",
+      "date": "2024-06-24",
+      "github": "https://github.com/shreshthgoyal/Eureka",
+      "summary": "AI-powered query interface that allows users to efficiently access and understand client data stored in internal databases using a user-friendly chat interface.",
+      "url": "https://github.com/shreshthgoyal/Eureka"
+    },
+    {
+      "name": "ZenFren",
+      "date": "2024-10-02",
+      "github": "https://github.com/shreshthgoyal/zenfren",
+      "summary": "ZenFren is an AI-powered chatbot that provides personalized mental health support to students.",
+      "url": "https://github.com/shreshthgoyal/zenfren"
+    },
+    {
+      "name": "GitGraph Backend",
+      "date": "2024-04-03",
+      "github": "https://github.com/shreshthgoyal/gitgraph-bck",
+      "summary": "Backend for GitGraph: Parses Python code to generate ASTs and construct functional dependency graphs.",
+      "url": "https://github.com/shreshthgoyal/gitgraph-bck"
+    },
+    {
+      "name": "Eth QF",
+      "date": "2023-10-15",
+      "github": "https://github.com/shreshthgoyal/Eth-QF",
+      "summary": "A decentralized Quadratic Crowdfunding Platform built on the Ethereum blockchain.",
+      "url": "https://github.com/shreshthgoyal/Eth-QF"
+    },
+    {
+      "name": "NaturalShell",
+      "date": "2024-03-02",
+      "github": "https://github.com/shreshthgoyal/naturalshell",
+      "summary": "An AI-powered tool that converts natural language into shell commands, complete with explanations and editable suggestions.",
+      "url": "https://www.npmjs.com/package/naturalshell"
+    },
+    {
+      "name": "cmdX",
+      "date": "2024-06-20",
+      "github": "https://github.com/shreshthgoyal/cmdX",
+      "summary": "A CLI tool that transforms natural language instructions into executable Linux shell commands.",
+      "url": "https://github.com/shreshthgoyal/cmdX"
+    },
+    {
+      "name": "PixArt",
+      "date": "2023-03-13",
+      "github": "https://github.com/shreshthgoyal/PixArt",
+      "summary": "A Golang-based desktop GUI application for creating and saving pixel art, built using the Fyne toolkit.",
+      "url": "https://github.com/shreshthgoyal/PixArt"
+    }
+  ]
+
+}

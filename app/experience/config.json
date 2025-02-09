@@ -1,0 +1,39 @@
+{
+  "experiences": [
+    {
+      "company": "CureFit",
+      "position": "Software Engineer Intern",
+      "duration": "Jan 2025 - Present",
+      "location": "Bengaluru, India",
+      "description": "Working with the growth team, introducing new apis and innovating in health tech industry."
+    },
+    {
+      "company": "CureFit",
+      "position": "Software Engineer Intern",
+      "duration": "May 2024 - Jul 2024",
+      "location": "Bengaluru, India",
+      "description": "Onboarded a chatbot and engineered ETL pipelines, enhancing system efficiency and reducing turnaround time."
+    },
+    {
+      "company": "Forem (Dev.to)",
+      "position": "Moderator",
+      "duration": "Apr 2022 - Present",
+      "location": "Remote",
+      "description": "Top Author and Moderator working on managing the community interactions on Forem on a part-time basis."
+    },
+    {
+      "company": "Backdrop Labs",
+      "position": "Developer",
+      "duration": "Jul 2024 - Aug 2024",
+      "location": "Remote",
+      "description": "Collaborated on a projects, contributing to back-end development and debugging."
+    },
+    {
+      "company": "easycompany",
+      "position": "Software Developer",
+      "duration": "Jul 2022 - Jul 2022",
+      "location": "India",
+      "description": "Developed full-stack applications with ReactJS and NodeJS, ensuring seamless integration."
+    }
+  ]
+}

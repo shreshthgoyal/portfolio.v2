@@ -1,0 +1,208 @@
+---
+title: 'A Beginner's Guide to Tree-sitter'
+publishedAt: '2024-05-06'
+summary: ''
+---
+
+Navigating through extensive or complex code can be challenging, but **Tree-sitter** is here to assist.
+
+## Key Background Knowledge
+
+### Tree-sitter
+[Tree-sitter](https://tree-sitter.github.io/tree-sitter/) generates parsers based on a language and provides insights about the code as seen by the engine. It takes that messy code and weaves it into a clear, structured map, revealing the relationships between different parts. This map, called an Abstract Syntax Tree (AST), acts like a visual blueprint, making complex code easier to understand.
+
+### Abstract Syntax Tree (AST)
+
+[AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree) (Abstract Syntax Tree) breaks down code into its fundamental elements – variables, functions, and expressions – and shows how they interact, similar to a family tree where each person is connected to other via a bloodline. The root of the tree represents the entire program, with branches stemming out for different sections. Just like a family tree clarifies relationships, the AST makes code connections crystal clear.
+More formally it is a graph representation of source code primarily used by compilers to read code and generate the target binaries.
+
+You can play with your code [here](https://astexplorer.net/), and visualise ASTs for the same.
+
+## Coding Time!
+
+### Example code
+
+Lets's see AST visualisation and Tree-sitter working for the following Python code!
+
+```py
+def greet(name):
+  print("Hello, " + name + "!")
+```
+
+
+In constructing the Abstract Syntax Tree (AST), the function definition is designated as the root node, with "greet" and "name" forming its direct descendants or children, illustrating the hierarchical relationship between the function and its components. The print statement is then integrated into the AST as another child node of the function definition, with a further breakdown of its internal syntactic structure to represent the operation and its operands as shown in the following image:
+
+![AST Visualisation](https://i.ibb.co/BfH7bNH/image.png)
+
+AST formed above can be visualised as a tree as follows:
+
+![AST Tree](https://i.ibb.co/FKnp0NV/Screenshot-from-2024-04-06-15-12-04.png)
+
+Isn't this cool?
+
+### Using Tree-sitter in Your JavaScript Project
+
+While Tree-sitter itself is majorly writtern in Rust, there are JavaScript bindings that allow you to interact with it from your JavaScript code. Here's a glimpse into what you can do:
+
+1.  **Installation:**  First, you'll need to install the Tree-sitter library and the Python parser using npm:
+
+```bash
+npm install tree-sitter tree-sitter-python --legacy-peer-deps
+```
+
+
+
+> legacy-peer-deps flag is added due to peerDependencies conflict
+
+2.  **Write Some Python Code:** Create a simple Python file with some code you'd like to analyze (like the `greet` function from before). Save this file as `your_code.py`.
+
+3.  **Import the Libraries:** In your JavaScript file, import the necessary libraries:
+
+
+```js
+const TreeSitter = require('tree-sitter');
+const Python = require('tree-sitter-python');
+const  fs  =  require('fs').promises;
+```
+
+4.  **Parse the Code:**  Use the libraries to parse your Python file and generate the AST. Here's how:
+
+
+```js
+async function parseCode(codePath) {
+  // Load the Python parser
+  const  parser  =  new  TreeSitter();
+  // Set the language to the parser
+  parser.setLanguage(Python);
+  // Read the code file content
+  const codeContent = await readFile(codePath, 'utf8');
+  // Parse the code using the chosen parser
+  const tree = await parser.parse(codeContent);
+  return tree.rootNode;
+}
+```
+
+5.  **Explore the AST (Doing it on our own!)**
+
+> This can be overwhelming in the beginning, stick with me through this.
+
+The AST is a complex data structure, but we can explore its basic elements. Here's a breakdown of the `rootNode` object:
+
+-   **rootNode.type:**  This property tells you the type of node (e.g., "function_definition" for our example).
+-   **rootNode.children:**  This is an array containing child nodes of the current node.
+-   **rootNode.text:**  This property might contain the actual text content of the node (e.g., the function name or the string to be printed).
+
+Here's some example code to explore the root node of the AST:
+```js
+async function printASTNodeInfo(rootNode) {
+  console.log(`Node type: ${rootNode.type}`);
+  // Loop through child nodes
+  for (const child of rootNode.children) {
+    console.log(`  - Child node type: ${child.type}`);
+    // Explore child nodes recursively
+    if (child.children.length > 0) {
+      await printASTNodeInfo(child);
+    } else {
+      // For leaf nodes (no children), print the text content
+      if (child.text) {
+        console.log(`    - Text content: ${child.text}`);
+      }
+    }
+  }
+}
+```
+6. **Adding the main function:** Integrating all the functions together
+
+```js
+async  function  main(codePath) {
+try {
+const  rootNode  =  await  parseCode(codePath);
+await  printASTNodeInfo(rootNode);
+} catch (error) {
+console.error(`Failed to parse code: ${error.message}`);
+}}
+// Calling the main function
+main(YOUR_CODE_PATH);
+```
+
+#### Explanation:
+
+1.  **Recursive Exploration:** The code now includes a nested function call to `printASTNodeInfo` for each child node. This creates a recursive loop, where it explores the child node's type, then further explores its children if it has any. This allows you to traverse the entire AST structure.
+
+2.  **Leaf Nodes:** The code checks for the presence of child nodes. If a child node doesn't have any children itself (meaning it's a leaf node), it might contain the actual text content of the code element it represents. The code checks for the `text` property and prints it if available.
+
+#### Running the Code:
+
+1.  Make sure you have Node.js and npm installed.
+2.  Create two files:  `your_code.py`  (containing your Python code) and  `analyze_code.js`  (containing your JavaScript code with the functions above).
+3.  In  `analyze_code.js`, modify the  `parseCode`  function to return the entire AST (`tree`) instead of just the root node.
+4.  Call the  `parseCode`  function in your script, passing the path to your Python file as ``node analyze_code.js`` in your terminal.
+5.  Once you have the AST (`tree`), call  `printASTNodeInfo`  with the  `tree.rootNode`  as the argument.
+
+**Example Output:**
+
+Assuming your Python code is the `greet` function example, the output might look something like:
+
+```
+Node type: function_definition
+  - Child node type: identifier
+    - Text content: greet
+  - Child node type: parameter
+    - Text content: name
+  - Child node type: block_statement
+    - Child node type: expression_statement
+      - Child node type: call_expression
+        - Text content: print
+        - Child node type: string_literal
+          - Text content: Hello,  + name + !Node type: module
+  - Child node type: function_definition
+Node type: function_definition
+  - Child node type: def
+    - Text content: def
+  - Child node type: identifier
+    - Text content: greet
+  - Child node type: parameters
+Node type: parameters
+  - Child node type: (
+    - Text content: (
+  - Child node type: identifier
+    - Text content: name
+  - Child node type: )
+    - Text content: )
+....
+```
+
+This gives you a glimpse into the AST structure, showing the different node types and potentially some text content for leaf nodes. Remember, this is a basic exploration, and the AST can get more complex depending on the code you analyze.
+
+### Seeing Tree-sitter in Action (Playground Version)
+
+While Tree-sitter itself requires some coding knowledge, there are online tools that allow you to see it work! Here's an example using [https://tree-sitter.github.io/tree-sitter/playground](https://tree-sitter.github.io/tree-sitter/playground):
+
+1.  Visit the Tree-sitter Playground ([https://tree-sitter.github.io/tree-sitter/playground](https://tree-sitter.github.io/tree-sitter/playground)).
+2.  Select "Python" from the language dropdown menu.
+3.  Paste your Python code snippet (like the  `greet`  function) into the code editor.
+4.  Click the "Parse" button.
+
+Yayy! If your code is valid, you'll see the AST generated below the code editor. You can click on different nodes in the tree to see more information about that specific part of the code.
+
+### Beyond the Basics:
+
+While exploring the raw AST structure can be informative, some libraries offer functionalities to visualize the AST as a tree structure. These libraries are separate installations and might require additional configuration. However, the core concept remains the same: you use Tree-sitter to generate the AST and then leverage other tools for visualization or further analysis.
+
+>  [**GitGraph**](https://gitgraph.netlify.app/) is one of my latest project majorly built with the help of tree-sitter. This transforms your codebase (currently supports python only codebases) into an interactive graph, revealing relationships between functions, classes, and files. Drag, zoom, and hover for deep dives, with sidebars displaying neighbor nodes and imported functions. Hyperlinks take you straight to the source code.
+>  Master your Python project's structure with GitGraph's clear and concise dependency view. You can view the backend source code [here](https://github.com/shreshthgoyal/gitgraph-bck).
+>  Do drop a ⭐ if you like it!
+
+This concludes our exploration of Tree-sitter in JavaScript. Remember, this is just the beginning! As you delve deeper into Python development, Tree-sitter can be a valuable tool for understanding complex code structures and making your coding journey more efficient.
+
+### Project Ideas
+
+Some project ideas where you can try your hands on:
+
+- Add more language supports to GitGraph.
+- A browser extension that summarizes code files on GitHub using Tree-sitter, providing quick insights into the code's structure and complexity.
+- A Code Complexity Analyzer that evaluates the complexity of functions and methods in a codebase, providing recommendations for simplification or refactoring based on the AST.
+
+Dive deeper and follow me on [Twitter](https://twitter.com/shreshthg30), [GitHub](https://github.com/shreshthgoyal/), and [LinkedIn](https://www.linkedin.com/in/shreshthg30/)!
+
+> If you found this guide helpful and created your own awesome CLI tool, I'd love to see it! Please share your GitHub repositories in the comments section below. Let's build together!

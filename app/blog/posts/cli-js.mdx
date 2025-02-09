@@ -1,0 +1,131 @@
+---
+title: 'A Guide to Building CLI Tools in JavaScript'
+publishedAt: '2024-03-29'
+summary: ''
+---
+
+Welcome to an exciting journey into the world of command-line interface (CLI) tools using JavaScript.
+
+In this guide, I'll walk you through creating a CLI tool that sets up a basic project structure, explaining every step and piece of code to ensure you can follow along.
+
+## Setting Up Your Development Environment
+
+Before we dive into the world of CLI tools, let's set up our environment:
+
+1. **Install Node.js and npm:** Head to [Node.js's official website](https://nodejs.org/en/) and download the recommended version. Installing Node.js also installs npm, the package manager you'll use to handle JavaScript packages.
+
+2. **Verify Your Installation:** Ensure everything is installed correctly by opening your terminal and running:
+
+   ```bash
+   node --version
+   npm --version
+   ```
+Seeing version numbers confirms you're all set!
+
+## Building Your CLI Tool: Project Setup Automation
+
+Our goal is to create a CLI tool that automatically generates a basic project structure, saving you the hassle of manually creating folders and files every time you start a new project.
+
+### Step 1: Kickstarting Your Project
+
+1.  **Create a Project Directory:** This is where your CLI tool's code will reside.
+
+    ```bash
+    mkdir my-project-setup
+    cd my-project-setup
+    ```
+
+2.  **Initialize Your npm Package:** This step generates a `package.json` file, which is crucial for managing your project's dependencies and configurations.
+
+
+    ```bash
+    npm init -y
+    ```
+
+
+### Step 2: Crafting Your CLI Application
+
+1.  **Create the Main File:** Name this file `index.js`. It will contain the logic of your CLI tool.
+
+2.  **Incorporate a Shebang Line:** At the beginning of `index.js`, add:
+
+    ```bash
+    #!/usr/bin/env node
+    ```
+
+    This line tells your system to use Node.js to execute this script.
+
+3.  **Implementing the Logic:** The code below creates a predefined project structure with directories and files:
+
+    ```bash
+    const fs = require('fs'); // File System module to handle file operations
+
+    // Define the project structure: directories and their respective files
+
+    const projectStructure = {
+      'src': ['index.js'],
+      'public': ['index.html', 'styles.css'],
+    };
+
+    // Iterate over the structure, creating directories and files
+
+    Object.entries(projectStructure).forEach(([dir, files]) => {
+      fs.mkdirSync(dir, { recursive: true }); // Create directories
+      files.forEach(file => fs.writeFileSync(`${dir}/${file}`, '')); // Create files
+    });
+
+    console.log("Project structure created successfully!");
+    ```
+
+    Here's what each part of the code does:
+
+-    **Require fs module:** This is Node.js's file system module, which you'll use to create directories and files.
+-     **Define project structure:** We specify which directories to create and what files they should contain.
+-     **Create directories and files:** Using `fs.mkdirSync` and `fs.writeFileSync`, the script creates each directory and file according to the structure defined.
+
+**4. Make Your Script Executable:** Modify `package.json` to include a `"bin"` section. This tells npm which command should execute your script:
+
+    `"bin": {
+      "setup-project": "./index.js"
+    }`
+
+
+### Step 3: Testing and Linking Your Tool Locally
+
+Before sharing your tool, test it:
+
+1.  **Link Your Tool:** Run `npm link` in your project directory. This command creates a symlink that allows you to run your CLI tool from anywhere in your terminal.
+
+2.  **Run Your Tool:** Simply type `setup-project` in your terminal in project's directory. If everything is set up correctly, you'll see the "Project structure created successfully!" message, with the project structure as mentioned.
+
+>YES, THAT'S ALL IT TOOK!
+
+
+### Step 4: Enhancing Functionality
+
+Your tool now automates project setup, but there's room for improvement. Consider adding more features or handling user input to customize the project structure. Explore packages like `yargs` for parsing command-line arguments. You can learn more about yargs through their [official documentation here.](https://yargs.js.org/)
+
+### Step 5: Sharing Your Tool on npm
+
+Ready to share your CLI tool with the world? Here's how:
+
+1.  **Sign Up on npm:** If you don't have an account, create one at [https://www.npmjs.com/signup](https://www.npmjs.com/signup).
+
+2.  **Log In via Terminal:** Run `npm login` and enter your npm credentials.
+
+3.  **Publish Your Package:** In your project directory, execute `npm publish`.
+
+
+Congratulations! Your CLI tool is now available on npm for everyone to use.
+
+> If you have followed me till here, do checkout my first CLI tool I made in Javascript, and published on npm: Naturalshell. Naturalshell provides AI in your terminal, no need of memorising shell commands now!
+> You can checkout the [npm package here](https://www.npmjs.com/package/naturalshell) and the [github repository here](https://github.com/shreshthgoyal/naturalshell).
+> Do drop a ⭐, and feel free to add new features and build on naturalshell with me!
+
+>This tool leverages AI to parse natural language and provide shell commands to users based on their needs. Beyond just providing commands, it also offers concise explanations, ensuring users not only know what to do but understand how it works. With the added convenience of editing commands directly within the tool and the ability to execute them immediately, NaturalShell delivers a user-friendly, intuitive experience
+
+## Wrapping Up
+
+You've taken a significant first step into the world of CLI tool development with JavaScript. By building a simple yet functional tool, you've learned the essentials of creating, testing, and publishing CLI applications. Keep experimenting, learning, and building. The command line is a powerful ally, and now, it's yours to command. Happy coding!
+
+> If you found this guide helpful and created your own awesome CLI tool, I'd love to see it! Please share your GitHub repositories in the comments section below. Let's build together!

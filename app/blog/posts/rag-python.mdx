@@ -1,0 +1,349 @@
+---
+title: 'Create Your Own AI RAG Chatbot: A Python Guide with LangChain'
+publishedAt: '2024-10-20'
+summary: ''
+---
+
+Who wouldn’t want instant answers from their documents? That’s exactly what RAG chatbots do—combining retrieval with AI generation for quick, accurate responses!
+
+In this guide, I’ll show you how to create a chatbot using **Retrieval-Augmented Generation (RAG)** with [**LangChain**](https://www.langchain.com/) and [**Streamlit**](https://streamlit.io/). This chatbot will pull relevant information from a knowledge base and use a language model to generate responses.
+
+I’ll walk you through each step, providing multiple options for response generation, whether you use **[OpenAI](https://openai.com/)**, **[Gemini](https://www.gemini.com/)**, or **[Fireworks](https://fireworks.ai/)**—ensuring a flexible and cost-effective solution.
+
+## What is Retrieval-Augmented Generation (RAG)?
+
+**RAG** is a method that combines **retrieval** and **generation** to deliver more accurate and context-aware chatbot responses. The retrieval process pulls relevant documents from a knowledge base, while the generation process uses a language model to create a coherent response based on the retrieved content. This ensures your chatbot can answer questions using the most recent data, even if the language model itself hasn’t been specifically trained on that information.
+
+Imagine you have a personal assistant who doesn’t always know the answer to your questions. So, when you ask a question, they look through books and find relevant information (retrieval), then they summarize that information and tell it back to you in their own words (generation). This is essentially how RAG works, combining the best of both worlds.
+
+In a Flowchart RAG process will somewhat look like this:
+
+![RAG Flow](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ql72c1bw38wf07f9s7to.png)
+
+Now, let’s get started, and get our own chatbot!
+
+---
+
+## Setting Up the Project Environment
+
+> We'll be using Python mostly in this TUTO, if you are JS head you can follow the explanations and go through the documentation of [langchain js.](https://js.langchain.com/docs/introduction/)
+
+First, we need to set up our project environment. This includes creating a project directory, installing dependencies, and setting up API keys for different language models.
+
+### 1. Create a Project Folder and Virtual Environment
+
+Start by creating a project folder and a virtual environment:
+
+```bash
+mkdir rag-chatbot
+cd rag-chatbot
+python -m venv venv
+source venv/bin/activate
+```
+
+### 2. Install Dependencies
+
+Next, create a `requirements.txt` file to list all necessary dependencies:
+
+```txt
+langchain==0.0.329
+streamlit==1.27.2
+faiss-cpu==1.7.4
+python-dotenv==1.0.0
+tiktoken==0.5.1
+openai==0.27.10
+gemini==0.3.1
+fireworks==0.4.0
+sentence_transformers==2.2.2
+```
+
+Now, install these dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Setting Up API Keys
+
+We’ll be using **OpenAI**, **Gemini**, or **Fireworks** for the chatbot’s response generation. You can choose any of these based on your preferences.
+
+> Don't worry if you are experimenting, Fireworks provide $1 worth of API keys for free, and `gemini-1.5-flash` model is also free to an extent!
+
+Set up a `.env` file to store the API keys for your preferred model:
+
+```txt
+# Uncomment your API key
+# OPENAI_API_KEY=your_openai_api_key_here
+# GEMINI_API_KEY=your_gemini_api_key_here
+# FIREWORKS_API_KEY=your_fireworks_api_key_here
+```
+
+Make sure to sign up for these services and get your API keys. Both **Gemini** and **Fireworks** offer free tiers, while **OpenAI** charges based on usage.
+
+---
+
+## Document Processing and Chunking
+
+To give the chatbot context, we’ll need to process documents and split them into manageable chunks. This is important because large texts need to be broken down for embedding and indexing.
+
+### 1. Create `document_processor.py`
+
+Create a new Python script called `document_processor.py` to handle document processing:
+
+```python
+from langchain.document_loaders import TextLoader
+from langchain.text_splitter import CharacterTextSplitter
+
+class DocumentProcessor:
+    def __init__(self, file_path):
+        self.file_path = file_path
+
+    def load_and_split(self):
+        loader = TextLoader(self.file_path)
+        documents = loader.load()
+        splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        texts = splitter.split_documents(documents)
+        return texts
+
+if __name__ == "__main__":
+    processor = DocumentProcessor("data/sample_text.txt")
+    texts = processor.load_and_split()
+    print(f"Processed {len(texts)} text chunks")
+```
+
+This script loads a text file and splits it into smaller chunks of about 1000 characters with a small overlap to ensure that no context is lost between chunks. Once processed, the documents are ready to be embedded and indexed.
+
+---
+
+## Creating Embeddings and Indexing
+
+Now that we have our documents chunked, the next step is to convert them into **embeddings** (numerical representations of text) and index them for fast retrieval. (as machines understand numbers easier than words)
+
+### 1. Create `embedding_indexer.py`
+
+Create another script called `embedding_indexer.py`:
+
+```python
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.vectorstores import FAISS
+
+class EmbeddingIndexer:
+    def __init__(self):
+        self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+
+    def create_vectorstore(self, texts):
+        vectorstore = FAISS.from_documents(texts, self.embeddings)
+        return vectorstore
+
+if __name__ == "__main__":
+    from document_processor import DocumentProcessor
+
+    processor = DocumentProcessor("data/sample_text.txt")
+    texts = processor.load_and_split()
+
+    indexer = EmbeddingIndexer()
+    vectorstore = indexer.create_vectorstore(texts)
+    print("Vector store created successfully")
+```
+
+In this script, the embeddings are created using a [Hugging Face](https://huggingface.co/models) model (`all-MiniLM-L6-v2`). We then store these embeddings in a **[FAISS](https://faiss.ai/)** vectorstore, which allows us to quickly retrieve similar text chunks based on a query.
+
+---
+
+## Implementing Retrieval and Response Generation
+
+Here comes the exciting part: combining retrieval with language generation! You’ll now create a **RAG chain** that fetches relevant chunks from the vectorstore and generates a response using a language model. (vectorstore is a database where we stored our data converted to numbers as vectors)
+
+### 1. Create `rag_chain.py`
+
+Let’s create the file `rag_chain.py`:
+
+```python
+from langchain.chains import RetrievalQA
+from langchain.llms import OpenAI, Gemini, Fireworks
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+class RAGChain:
+    def __init__(self, vectorstore):
+        self.vectorstore = vectorstore
+        self.llm = self.get_llm()
+
+    def get_llm(self):
+        if os.getenv("OPENAI_API_KEY"):
+            return OpenAI(api_key=os.getenv("OPENAI_API_KEY"), temperature=0)
+        elif os.getenv("GEMINI_API_KEY"):
+            return Gemini(api_key=os.getenv("GEMINI_API_KEY"), temperature=0)
+        elif os.getenv("FIREWORKS_API_KEY"):
+            return Fireworks(api_key=os.getenv("FIREWORKS_API_KEY"), temperature=0)
+        else:
+            raise ValueError("No valid API key found! Please set one in .env file.")
+
+    def create_chain(self):
+        retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
+        qa_chain = RetrievalQA.from_chain_type(
+            llm=self.llm,
+            chain_type="stuff",
+            retriever=retriever,
+            return_source_documents=True
+        )
+        return qa_chain
+
+if __name__ == "__main__":
+    from document_processor import DocumentProcessor
+    from embedding_indexer import EmbeddingIndexer
+
+    processor = DocumentProcessor("data/sample_text.txt")
+    texts = processor.load_and_split()
+
+    indexer = EmbeddingIndexer()
+    vectorstore = indexer.create_vectorstore(texts)
+
+    rag_chain = RAGChain(vectorstore)
+    qa_chain = rag_chain.create_chain()
+
+    query = "What is the capital of France?"
+    result = qa_chain({"query": query})
+    print(f"Answer: {result['result']}")
+```
+
+Here, we give you the choice between **OpenAI**, **Gemini**, or **Fireworks** based on the API key you provide. The RAG chain will retrieve the top 3 most relevant documents and use the language model to generate a response.
+
+You can switch between models depending on your budget or usage preferences—**Gemini** and **Fireworks** are free, while **OpenAI** charges based on usage.
+
+---
+
+## Building the Chatbot Interface
+
+Now, we’ll build a simple chatbot interface to take user input and generate responses using our RAG chain.
+
+### 1. Create `chatbot.py`
+
+Create a new file called `chatbot.py`:
+
+```python
+class Chatbot:
+    def __init__(self, qa_chain):
+        self.qa_chain = qa_chain
+
+    def get_response(self, user_input):
+        try:
+            response = self.qa_chain({"query": user_input})
+            return response['result']
+        except Exception as e:
+            return f"An error occurred: {str(e)}"
+
+if __name__ == "__main__":
+    from rag_chain import RAGChain
+    from document_processor import DocumentProcessor
+    from embedding_indexer import EmbeddingIndexer
+
+    processor = DocumentProcessor("data/sample_text.txt")
+    texts = processor.load_and_split()
+
+    indexer = EmbeddingIndexer()
+    vectorstore = indexer.create_vectorstore(texts)
+
+    rag_chain = RAGChain(vectorstore)
+    qa_chain = rag_chain.create_chain()
+
+    chatbot = Chatbot(qa_chain)
+
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() in ['exit', 'quit', 'bye']:
+            print("Chatbot: Goodbye!")
+            break
+        response = chatbot.get_response(user_input)
+        print(f"Chatbot: {response}")
+```
+
+This script creates a command-line chatbot interface that continuously listens for user input, processes it through the RAG chain, and returns the generated response.
+
+---
+
+## Creating the Streamlit UI
+
+It’s time to make your chatbot even more user-friendly by building a web interface using **[Streamlit](https://streamlit.io/)**. This will allow users to interact with your chatbot through a browser.
+
+### 1. Create `app.py`
+
+Create `app.py`:
+
+```python
+import streamlit as st
+from document_processor import DocumentProcessor
+from embedding_indexer import EmbeddingIndexer
+from rag_chain import RAGChain
+from chatbot import Chatbot
+
+@st.cache_resource
+def initialize_chatbot(file_path):
+    processor = DocumentProcessor(file_path)
+    texts = processor.load_and_split()
+    indexer = EmbeddingIndexer()
+    vectorstore = indexer.create_vectorstore(texts)
+    rag_chain = RAGChain(vectorstore)
+    return Chatbot(rag_chain.create_chain())
+
+st.title("RAG Chatbot")
+
+uploaded_file = st.file_uploader("Upload a text file for the knowledge base", type="txt")
+
+if uploaded_file:
+    with open("temp_knowledge_base.txt", "wb") as f:
+        f.write(uploaded_file.getbuffer())
+
+    chatbot = initialize_chatbot("temp_knowledge_base.txt")
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for message in st.session_state.messages:
+        st.chat_message(message["role"]).markdown(message["content"])
+
+    if prompt := st.chat_input("Ask a question"):
+        st.chat_message("user").markdown(prompt)
+        st.session_state.messages.append({"role": "user", "content": prompt})
+
+        response = chatbot.get_response(prompt)
+        st.chat_message("assistant").markdown(response)
+        st.session_state.messages.append({"role": "assistant", "content": response})
+else:
+    st.write("Please upload a text file to start chatting!")
+```
+
+### 2. Run the Streamlit App
+
+To run your Streamlit app, simply use:
+
+```bash
+streamlit run app.py
+```
+
+This will launch a web interface where you can upload a text file, ask questions, and receive answers from the chatbot.
+
+---
+
+## Optimizing Performance
+
+For better performance, you can experiment with chunk size and overlap when splitting the text. Larger chunks provide more context, but smaller chunks may make retrieval faster. You can also use **[Streamlit caching](https://docs.streamlit.io/library/advanced-features/caching)** to avoid repeating expensive operations like generating embeddings.
+
+If you want to optimize costs, you can switch between **OpenAI**, **Gemini**, or **Fireworks** depending on the query complexity—use **OpenAI** for complex questions and **Gemini** or **Fireworks** for simpler ones to reduce costs.
+
+---
+
+## Wrapping Up
+
+Congratulations! You've successfully created your own RAG-based chatbot. Now, the possibilities are endless:
+
+- Create your own personalized study buddy.
+- No more going through long documentations—just "RAG it out" for quick, accurate answers!
+
+The journey starts here, and the potential is limitless!
+
+---
+
+You can follow my work on [GitHub](https://github.com/shreshthgoyal?tab=repositories). Feel free to reach out—my DMs are always open on [X](https://x.com/shreshthg30) and [LinkedIn](https://www.linkedin.com/in/shreshthg30/).
